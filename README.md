@@ -1,2 +1,12 @@
 # Sp00k-Invaders
-Entry for Local Hack Day 2018
+
+## Requirements
+Python 3.x
+	Pygame
+	Pyserial
+
+## Installation
+`pip3 install -r requirements.txt`
+
+## Running
+`python3 thegame.py`
