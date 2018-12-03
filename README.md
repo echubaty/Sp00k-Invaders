@@ -15,3 +15,6 @@ This was created for Local Hack Day 2018. This project is inspired by Space Inva
 
 ## Running
 `python3 thegame.py`
+
+## Demo
+![](assets/game.gif)
