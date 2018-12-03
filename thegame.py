@@ -5,6 +5,10 @@ import math
 from pygame.locals import *
 from random import randint
 
+mode = {'shrek': ['assets/shrekship.png', 'assets/pieceofship.png'],
+        'ship': ['assets/blueship2.png', 'assets/hack.png']}
+mode_str = 'ship'
+
 
 class Ship(pygame.sprite.Sprite):
     # Constructor. Pass in the color of the block,
@@ -38,14 +42,15 @@ class Ship(pygame.sprite.Sprite):
         shoot, player_x, player_y, tilt_x, tilt_y, tilt_z = line.split()
 
         # Rate limit the firing
-        self.fire = self.last_shot > 4 and int(shoot) == 0
+        self.fire = self.last_shot > 3 and int(shoot) == 0
+        # self.fire = True
         if self.fire:
             self.last_shot = 0
         else:
             self.last_shot += 1
 
-        self.rect.x = min(max(0, self.rect.x - ((max(0, float(player_x)) - 508) * x_speed)), 965)
-        self.rect.y = min(max(700, self.rect.y + ((max(0, float(player_y)) - 503) * y_speed)), 965)
+        self.rect.x = min(max(0, self.rect.x - ((max(0.0, float(player_x)) - 508) * x_speed)), 965)
+        self.rect.y = min(max(700, self.rect.y + ((max(0.0, float(player_y)) - 503) * y_speed)), 965)
         self.rot = (self.rot + float(tilt_x) * 40) / 2  # Smooths rotation out a bit instead of raw accel values
         self.image = pygame.transform.rotate(self.vanilla_image, self.rot)
 
@@ -53,11 +58,11 @@ class Ship(pygame.sprite.Sprite):
 class Baddies(pygame.sprite.Sprite):
     """ This class represents the baddies. """
 
-    def __init__(self, x, y):
+    def __init__(self, image, x, y):
         # Call the parent class (Sprite) constructor
         super().__init__()
 
-        raw_image = pygame.image.load('assets/hack.png')
+        raw_image = pygame.image.load(image)
         self.image = pygame.transform.scale(raw_image, (96, 96)).convert_alpha()
 
         self.rect = self.image.get_rect()
@@ -77,7 +82,7 @@ class Bullet(pygame.sprite.Sprite):
         # Call the parent class (Sprite) constructor
         super().__init__()
 
-        self.image = pygame.Surface([4, 10])
+        self.image = pygame.Surface([4, 4])
         self.image.fill((255, 255, 255))
 
         self.rect = self.image.get_rect()
@@ -99,9 +104,6 @@ def calc_bullet_init(sprite_ship):
     new_x = (math.cos(rad) * (center_x - x)) + (math.sin(rad) * (y - center_y)) + x
     new_y = (math.sin(rad) * (center_x - x)) - (math.cos(rad) * (y - center_y)) + y
 
-    if rad > 0:
-        new_x += 64 / 2
-
     return new_x, new_y, sprite_ship.rot
 
 
@@ -110,22 +112,22 @@ pygame.display.set_caption("Sp00k Invaders!")
 screen = pygame.display.set_mode((1024, 1024))
 clock = pygame.time.Clock()
 
+
 def init_game():
     global player_sprite, bullet_sprites, baddies_sprites, player, score, running, since_spawn
     player_sprite = pygame.sprite.Group()
     bullet_sprites = pygame.sprite.Group()
     baddies_sprites = pygame.sprite.Group()
-    ship_parking_spot = 'assets/blueship2.png'
+    ship_parking_spot = mode[mode_str][0]
     player = Ship(ship_parking_spot, 64, 64)
     player_sprite.add(player)
     score = 0
     running = True
     since_spawn = 0
-5
+
 
 global best_scare
 best_scare = 0
-
 
 init_game()
 
@@ -135,7 +137,9 @@ while running:
         # Check escape key
         if event.type == KEYDOWN:
             if event.key == K_ESCAPE:
-                running = False
+                # running = False
+                mode_str = 'shrek'
+                init_game()
         # Check quit signal
         if event.type == QUIT:
             pygame.quit()
@@ -150,11 +154,16 @@ while running:
         if bullet.rect.y < -10:
             bullet_sprites.remove(bullet)
 
+    for baddie in baddies_sprites:
+        # Remove the bullet if it flies up off the screen
+        if baddie.rect.y > 1100:
+            baddies_sprites.remove(baddie)
+
     kills = pygame.sprite.groupcollide(bullet_sprites, baddies_sprites, True, True)
 
     if since_spawn > 10:
-        for i in range(score//500 + 1):
-            bad = Baddies(randint(25, 1000), 25)
+        for i in range(score // 500 + 1):
+            bad = Baddies(mode[mode_str][1], randint(25, 1000), 25)
             baddies_sprites.add(bad)
         since_spawn = 0
     else:
@@ -162,11 +171,11 @@ while running:
 
     score += len(kills) * 100
 
-    player_sprite.update()
-    player_sprite.draw(screen)
-
     bullet_sprites.update()
     bullet_sprites.draw(screen)
+
+    player_sprite.update()
+    player_sprite.draw(screen)
 
     baddies_sprites.update()
     baddies_sprites.draw(screen)
